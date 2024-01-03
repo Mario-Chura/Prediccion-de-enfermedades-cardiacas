@@ -1,88 +1,77 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
+import streamlit as st                            #Libreria de streamlit
+import pandas as pd                               #Para la lectura de archivos                             
 import pickle
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score
 
-# Configuración de la página de Streamlit
+# Configuración de la página de Streamlit pestaña
 st.set_page_config(
     page_title="Predicción con IA",
-    page_icon='https://cdn-icons-png.flaticon.com/512/5935/5935638.png',
+    page_icon='https://cdn.pixabay.com/photo/2020/08/04/11/45/heart-5462571_1280.png',
     layout="centered",
     initial_sidebar_state="auto"
 )
 
 # Título y descripción de la aplicación
 st.title("Predicción de enfermedades cardiacas usando IA")
-st.markdown("Esta aplicación predice si tienes una enfermedad cardiaca basándose en tus datos ingresados.")
+st.markdown("Con esta aplicación evaluaremos si tienes una enfermedad cardiaca basándose en tus datos ingresados.")
 st.markdown("---")
 
+
 # Logo en la barra lateral
-logo = "imagen.png"
-st.sidebar.image(logo, width=150)
+st.sidebar.header('Tu salud es primero... !!!')
+logo = "https://media3.giphy.com/media/hOnvWVCQJG8YP4jS5H/giphy.gif?cid=6c09b952ob2ltgc1cl6gvhb1mgte50elh72k1mle3mp6xrqg&ep=v1_internal_gif_by_id&rid=giphy.gif&ct=s"
+st.sidebar.image(logo, width=200)
 
 # Sección de datos del usuario en la barra lateral
-st.sidebar.header('Datos ingresados por el usuario')
-
 # Cargar datos del usuario
-uploaded_file = st.sidebar.file_uploader("Cargue su archivo CSV", type=["csv"])
+st.header('Datos ingresados por el usuario')
+uploaded_file = st.file_uploader("Cargue su archivo CSV", type=["csv"])
+
 
 if uploaded_file is not None:
     input_df = pd.read_csv(uploaded_file)
 else:
     def user_input_features():
         # Controles para ingresar datos
-        age = st.sidebar.slider('Edad', 10, 77, 41) #ok
-        sex = st.sidebar.selectbox('Género', ['Masculino', 'Femenino']) #ok
-        cp = st.sidebar.selectbox('Tipo de Dolor en el Pecho', ['Typical Angina', 'Atypical Angina', 'Non-anginal Pain', 'Asymptomatic']) #ok
-        trtbps = st.sidebar.slider('Presión Arterial en Reposo', 70, 200, 132) #ok
-        chol = st.sidebar.slider('Colesterol Sérico (mg/dl)', 50, 564, 242) #ok
-        fbs = st.sidebar.selectbox('Nivel de Azúcar en Sangre en Ayunas > 120 mg/dl', ['No', 'Sí'])
-        restecg = st.sidebar.selectbox('Resultados Electrocardiográficos en Reposo', ['Normal', 'Anomalía en la Onda ST-T', 'Hipertrofia Ventricular Izquierda'])
-        thalachh = st.sidebar.slider('Frecuencia Cardíaca Máxima Lograda', 60, 202, 148)
-        exng = st.sidebar.selectbox('Angina Inducida por Ejercicio', ['No', 'Sí']) #ok
-        oldpeak = st.sidebar.slider('Depresión del Segmento ST Inducida por el Ejercicio mm', 0.0, 6.2, 1.0)
-        slp = st.sidebar.selectbox('Inclinación del Segmento ST Pico del Ejercicio', ['Ascendente', 'Plano', 'Descendente'])
-        caa = st.sidebar.slider('Número de Vasos Principales Coloreados por la Fluoroscopia', 0, 3, 0)
-        thall = st.sidebar.selectbox('Resultado de la Prueba de Esfuerzo Nuclear', ['Normal', 'Defecto Fijo', 'Defecto Reversible', 'Irreversible'])
-        
+        age = st.sidebar.slider('Edad (age)', 25, 100, 52)
+        sex = st.sidebar.selectbox('Género (sex)', ['Masculino', 'Femenino'])
+        cp = st.sidebar.slider('Tipo de Dolor en el Pecho (cp)', 0, 3, 1)
+        trestbps = st.sidebar.slider('Presión Arterial en Reposo (mm Hg) (trestbps)', 80, 200, 125)
+        chol = st.sidebar.slider('Colesterol Sérico (mg/dl)(chol)', 120, 564, 212)
+        fbs = st.sidebar.selectbox('Nivel de Azúcar en Sangre en Ayunas > 120 (mg/dl) (fbs)', ['No', 'Sí'])
+        restecg = st.sidebar.selectbox('Resultados Electrocardiográficos en Reposo (restecg)', ['Normal', 'Anomalía en la Onda ST-T', 'Hipertrofia Ventricular Izquierda'])
+        thalach = st.sidebar.slider('Frecuencia Cardíaca Máxima Lograda (thalach)', 70, 202, 168)
+        exang = st.sidebar.selectbox('Angina Inducida por Ejercicio (exang)', ['No', 'Sí'])
+        oldpeak = st.sidebar.slider('Depresión del Segmento ST Inducida por el Ejercicio mm (oldpeak)', 0.0, 6.2, 1.0)
+        slope = st.sidebar.slider('Inclinación del Segmento ST Pico del Ejercicio (slope)', 0, 2, 2)
+        ca = st.sidebar.slider('Número de Vasos Principales Coloreados por la Fluoroscopia (ca)', 0, 4, 4)
+        thal = st.sidebar.slider('Resultado de la Prueba de Esfuerzo Nuclear (thal)', 0, 3, 0)
+
         data = {
             'age': age,
             'sex': 1 if sex == 'Masculino' else 0,
-            'cp': ['Typical Angina', 'Atypical Angina', 'Non-anginal Pain', 'Asymptomatic'].index(cp),
-            'trtbps': trtbps,
+            'cp': cp,
+            'trestbps': trestbps,
             'chol': chol,
-            'fbs': 1 if fbs == 'Sí' else 0, #ok
-            'restecg': ['Normal', 'Anomalía en la Onda ST-T', 'Hipertrofia Ventricular Izquierda'].index(restecg), #ok
-            'thalachh': thalachh, #ok
-            'exng': 1 if exng == 'Sí' else 0,
+            'fbs': 1 if fbs == 'Sí' else 0,
+            'restecg': ['Normal', 'Anomalía en la Onda ST-T', 'Hipertrofia Ventricular Izquierda'].index(restecg),
+            'thalach': thalach,
+            'exang': 1 if exang == 'Sí' else 0,
             'oldpeak': oldpeak,
-            'slp': ['Ascendente', 'Plano', 'Descendente'].index(slp),
-            'caa': caa,
-            'thall': ['Normal', 'Defecto Fijo', 'Defecto Reversible','Irreversible'].index(thall)
+            'slope': slope,
+            'ca': ca,
+            'thal': thal
         }
-        
-        # Convertir columnas categóricas en valores numéricos
-        encoder = LabelEncoder()
-        for col in ['sex', 'cp', 'fbs', 'restecg', 'exng', 'slp', 'caa', 'thall']:
-            data[col] = encoder.fit_transform([data[col]])
-
         features = pd.DataFrame(data, index=[0])
         return features
     
     input_df = user_input_features()
 
-# Convertir columnas categóricas en valores numéricos
-encoder = LabelEncoder()
-categorical_columns = ['sex', 'cp', 'fbs', 'restecg', 'exng', 'slp', 'caa', 'thall']
-for col in categorical_columns:
-    input_df[col] = encoder.fit_transform(input_df[col])
 
 # Seleccionar solo la primera fila
 input_df = input_df[:1]
 
-st.subheader('Datos ingresados por el usuario')
 
 if uploaded_file is not None:
     st.write(input_df)
@@ -90,51 +79,43 @@ else:
     st.write('A la espera de que se cargue el archivo CSV. Actualmente usando parámetros de entrada de ejemplo (que se muestran a continuación).')
     st.write(input_df)
 
-# Definir las columnas categóricas y sus posibles valores
-categorical_columns_values = {
-    'sex': [0, 1],
-    'cp': [0, 1, 2, 3],
-    'fbs': [0, 1],
-    'restecg': [0, 1, 2],
-    'exng': [0, 1],
-    'slp': [0, 1, 2],
-    'caa': [0, 1, 2, 3, 4],
-    'thall': [0, 1, 2, 3]
-}
+# Visualiza los datos del usuario
+st.subheader('Datos ingresados por el usuario')
 
-# Orden específico de las columnas
-column_order = ['age', 'trtbps', 'chol', 'thalachh', 'oldpeak', 
-                'sex', 'cp', 'fbs', 'restecg', 'exng', 'slp', 'caa', 'thall']
+# Obtén dummies con drop_first=False y prefix para True y False
+df = pd.get_dummies(input_df, columns=['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal'],
+                    prefix=['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal'], drop_first=False)
 
-# Crear un nuevo DataFrame en el formato deseado
-new_data_formatted = pd.DataFrame(columns=column_order)
+# Reordena las columnas según el orden específico que deseas
+desired_order = ['age', 'trestbps', 'chol', 'thalach', 'oldpeak',
+                 'sex_0', 'sex_1', 'cp_0', 'cp_1', 'cp_2', 'cp_3',
+                 'fbs_0', 'fbs_1', 'restecg_0', 'restecg_1', 'restecg_2',
+                 'exang_0', 'exang_1', 'slope_0', 'slope_1', 'slope_2',
+                 'ca_0', 'ca_1', 'ca_2', 'ca_3', 'ca_4',
+                 'thal_0', 'thal_1', 'thal_2', 'thal_3']
 
-# Agregar las columnas categóricas con los sufijos correspondientes
-for col, values in categorical_columns_values.items():
-    for value in values:
-        new_data_formatted[f'{col}_{value}'] = [1 if input_df[col][0] == value else 0]
+df = df.reindex(columns=desired_order)
 
-# Agregar las columnas numéricas
-numeric_columns = ['age', 'trtbps', 'chol', 'thalachh', 'oldpeak']
-for col in numeric_columns:
-    new_data_formatted[col] = input_df[col]
+# Rellena NaN con False
+df = df.fillna(False)
+
 
 # Selección del método de predicción
-selected_model = st.sidebar.selectbox('Seleccione el método de predicción', ['Random Forest', 'Naive Gaussian Bayes', 'Decision Tree Classifier'])
+selected_model = st.selectbox('Seleccione el método de predicción', ['Random Forest', 'Decision Tree Classifier'])
 
 # Cargar el modelo seleccionado
 models = {
-    'Random Forest': 'final_rf_model.pkl',
-    'Naive Gaussian Bayes': 'final_nb_model.pkl',
-    'Decision Tree Classifier': 'final_dt_model.pkl',
+    'Random Forest': 'final_Random_Forest_model.pkl',
+    'Decision Tree Classifier': 'final_Tree_Classifier_model.pkl',
 }
+
 
 if selected_model in models:
     load_clf = pickle.load(open(models[selected_model], 'rb'))
 
 # Realizar predicciones
-prediction = load_clf.predict(new_data_formatted)
-prediction_proba = load_clf.predict_proba(new_data_formatted)
+prediction = load_clf.predict(df)
+prediction_proba = load_clf.predict_proba(df)
 
 col1, col2 = st.columns(2)
 
@@ -151,12 +132,9 @@ if prediction == 0:
 else:
     st.subheader('La persona tiene problemas Cardiacos')
 
-# Calcular y mostrar la exactitud del modelo
-if uploaded_file is not None:
-    y_true = pd.read_csv(uploaded_file)['output'].values
-    y_pred = load_clf.predict(new_data_formatted)
-    accuracy = accuracy_score(y_true, y_pred)
-    st.subheader(f'Exactitud (Accuracy) del modelo {selected_model}: {accuracy * 100:.2f}%')
+
+
 
 st.markdown("---")
+
 
